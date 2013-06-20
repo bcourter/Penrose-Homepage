@@ -35,10 +35,26 @@ img.logo {
     vertical-align:text-top;
 }
 
-#panel {
+label span {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+}
+
+#title h1 {
+    position: absolute;
+    left: 135px;
+    top: 35px;
     margin: 1px;
     padding: 6px;
+    font-size: 38px;
+}
+
+#panel {
     position: absolute;
+    left: 15px;
+    top: 0px;
+    margin: 1px;
+    padding: 6px;
     pointer-events: none;
 }
 
@@ -67,13 +83,13 @@ img.logo {
 
 #menu ul
 {
-  padding-left: 20px;
+  padding-left: 26px;
 }
 
 #menu li
 {
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 20px;
+  line-height: 28px;
   list-style-type: none;
 }
 
@@ -83,5 +99,13 @@ img.logo {
   bottom: 10px;
   left: 10px;
   z-index: 100;
+}
+
+#helptext
+{
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  pointer-events: none;
 }
 

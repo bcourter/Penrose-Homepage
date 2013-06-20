@@ -3,9 +3,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>The Penrose Triangle</title>
+    <title>The Penrose Triangle | Burning Man 2013 Honorarium Project / Impossible Triangle Now Made Possible</title>
+    <link rel="stylesheet" href="black-tie-jquery-ui.css" />
     <link rel="stylesheet" href="penrose.css" />
-
+    
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -14,16 +15,27 @@
 
       ga('create', 'UA-41836574-1', 'penrosetriangle.com');
       ga('send', 'pageview');
-
     </script>
+
+    <script src="js/jquery-1.9.1.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/three.min.js"></script> 
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src="js/loaders/OBJLoader.js"></script>
 
   </head>
   <body>
 
+    <div id="title">
+        <a href="http://penrosetriangle.com/wordpress/">
+            <h1>The Penrose Triangle</h1>
+        </a>
+    </div>
+
     <div id="panel">
         <a href="http://penrosetriangle.com/wordpress/">
             <h1>
-                <img class=logo src="resources/Penrose Triangle Logo Text.png" />
+                <img class=logo src="resources/Penrose Triangle Logo.png" width="136" height="118"/>
             </h1>
         </a>
 
@@ -36,22 +48,15 @@
             </ul>
         </div>
     </div>
-    
+
     <div id="controls">
-        <label>
-            <input type='checkbox' id='isRotating' checked='yes' />
-            Rotating
-        </label>
-        <br />
-        <label>
-            <input type='checkbox' id='isAnimating' checked='yes' />
-            Animating
-        </label>
+        <input type='checkbox' id='isRotating' checked='yes' /><label for="isRotating">Rotate</label>
+        <input type='checkbox' id='isAnimating' checked='yes' /><label for="isAnimating">Animate</label>
+        <input type='checkbox' id='showPeople' /><label for="showPeople">Show Participants</label>
     </div>
 
-    <script src="js/three.js"></script> 
-    <script src="js/controls/OrbitControls.js"></script>
-    <script src="js/loaders/OBJLoader.js"></script>
+    <div id="helptext">Click + drag to spin, scroll wheel to zoom</div>
+
     <script src="js/penrose.js"></script>
 
   </body>

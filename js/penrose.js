@@ -1,16 +1,36 @@
+$(function() {
 
-var renderer, camera, settings, bodyGeometry, lightGeometry, triangle, scene;
+var renderer, camera, settings, bodyGeometry, lightGeometry, dudesGeometry, triangle, scene;
 var modelLoaded = false;
-var lightHue = 0;
+var dudesLoaded = false;
+var lightHue = 0.6;
 
-init();
+initUI();
+initRenderer();
 animate();
 
 document.onselectstart = function() {
   return false;
 };
 
-function init() {
+function initUI() {
+	$("#isRotating").button();
+	$("#isAnimating").button();
+	$("#showPeople").button().click(function() {
+		if (!dudesLoaded) {
+			loadDudes();
+		}
+		else {
+			dudesGeometry.traverse( function ( child ) {
+				if ( child instanceof THREE.Mesh ) {			
+					child.visible = settings.showPeopleCheckbox.checked;
+				}
+			});
+		}
+	});
+}
+
+function initRenderer() {
 	renderer = new THREE.WebGLRenderer({
 		antialias: true,
 	});
@@ -29,6 +49,7 @@ function init() {
 	var Settings = function () {
 		this.isRotatingCheckbox = document.getElementById("isRotating");
 		this.isAnimatingCheckbox = document.getElementById("isAnimating");
+		this.showPeopleCheckbox = document.getElementById("showPeople");
 	};
 	
 	triangle = new THREE.Object3D();
@@ -97,6 +118,23 @@ function finishModelLoad() {
 	modelLoaded = true;
 }
 
+function loadDudes() {
+	var dudeLoader = new THREE.OBJLoader();
+	dudeLoader.addEventListener( 'load', function ( event ) {
+		dudesGeometry = event.content.clone();
+		dudesGeometry.applyMatrix(new THREE.Matrix4().identity().rotateX(-Math.PI / 2));
+		dudesGeometry.traverse( function ( child ) {
+			if ( child instanceof THREE.Mesh ) {			
+				child.material = new THREE.MeshPhongMaterial( { color: 0xffcc11, emissive: 0x664408, shading: THREE.SmoothShading } );
+			}
+		});
+		
+		triangle.add(dudesGeometry);
+		dudesLoaded = true;
+	});
+	dudeLoader.load( "resources/obj/dudes0.obj" );
+}
+
 function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
@@ -151,11 +189,13 @@ function render() {
 	if (settings.isAnimatingCheckbox.checked && modelLoaded) {
 		lightGeometry.traverse( function ( child ) {
 			if ( child instanceof THREE.Mesh ) {
-				child.material.color.setHSL(lightHue, 1.0, 0.5);
+				child.material.color.setHSL(lightHue, 1.0, 0.6);
 			}
 		});
 	}
 
 	renderer.render( scene, camera );
 }
+
+}); // jQuery function wrapper
 
