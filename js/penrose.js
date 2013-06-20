@@ -14,20 +14,29 @@ document.onselectstart = function() {
 };
 
 function initUI() {
-	$("#isRotating").button();
-	$("#isAnimating").button();
-	$("#showPeople").button().click(function() {
-		if (!dudesLoaded) {
-			loadDudes();
-		}
-		else {
-			dudesGeometry.traverse( function ( child ) {
-				if ( child instanceof THREE.Mesh ) {			
-					child.visible = settings.showPeopleCheckbox.checked;
-				}
-			});
-		}
-	});
+	if (Detector.webgl) {
+		$("#isRotating").button();
+		$("#isAnimating").button();
+		$("#showPeople").button().click(function() {
+			if (!dudesLoaded) {
+				loadDudes();
+			} else {
+				dudesGeometry.traverse( function ( child ) {
+					if ( child instanceof THREE.Mesh ) {			
+						child.visible = settings.showPeopleCheckbox.checked;
+					}
+				});
+			}
+		});
+	} else {
+		$("#isRotating").hide();
+		$("#isAnimating").hide();
+		$("#showPeople").hide();
+		$("label").hide();
+		$("#helptext").hide();
+
+		Detector.addGetWebGLMessage({ parent: $("noWebGLMessage")[0] });
+	}
 }
 
 function initRenderer() {
@@ -125,7 +134,7 @@ function loadDudes() {
 		dudesGeometry.applyMatrix(new THREE.Matrix4().identity().rotateX(-Math.PI / 2));
 		dudesGeometry.traverse( function ( child ) {
 			if ( child instanceof THREE.Mesh ) {			
-				child.material = new THREE.MeshPhongMaterial( { color: 0xffcc11, emissive: 0x664408, shading: THREE.SmoothShading } );
+				child.material = new THREE.MeshPhongMaterial( { color: 0xeebb44, emissive: 0x664422, shading: THREE.SmoothShading } );
 			}
 		});
 		
