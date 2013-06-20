@@ -35,9 +35,11 @@ img.logo {
     vertical-align:text-top;
 }
 
+label {
+}
+
 label span {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
 }
 
 #title h1 {
@@ -107,5 +109,18 @@ label span {
   bottom: 10px;
   right: 10px;
   pointer-events: none;
+  font-size: 16px;
 }
 
+/* WebGL not detected message */
+#oldie 
+{
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+}
+
+#oldie a 
+{
+  text-decoration: underline;
+}
