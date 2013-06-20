@@ -1,15 +1,25 @@
-var renderer, camera, settings, materials, bodyGeometry, lightGeometry;
+
+var renderer, camera, settings, bodyGeometry, lightGeometry, triangle, scene;
+var modelLoaded = false;
+var lightHue = 0;
 
 init();
 animate();
 
+document.onselectstart = function() {
+  return false;
+};
+
 function init() {
-	renderer = new THREE.WebGLRenderer();
+	renderer = new THREE.WebGLRenderer({
+		antialias: true,
+	});
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	document.body.appendChild(renderer.domElement);
 	
-	camera = new THREE.PerspectiveCamera(5, window.innerWidth / window.innerHeight, 1, 1000);
+	camera = new THREE.PerspectiveCamera(5, window.innerWidth / window.innerHeight, 1, 900);
 	camera.position.z = 70;
+	camera.position.x = 50;
 	
 	controls = new THREE.OrbitControls( camera, renderer.domElement );
 	controls.addEventListener( 'change', render );
@@ -21,37 +31,70 @@ function init() {
 		this.isAnimatingCheckbox = document.getElementById("isAnimating");
 	};
 	
-	materials = [
-		new THREE.MeshLambertMaterial( { 
-			color: 0x222222, 
-			side: THREE.DoubleSide,
-			shading: THREE.FlatShading, 
-			transparent: true,  
-			opacity: 0.5
-		} ),
-		new THREE.MeshBasicMaterial( { 
-			color: 0xEEEEEE, 
-			shading: THREE.FlatShading, 
-			wireframe: true
-		} )
-	];
-	
-	
+	triangle = new THREE.Object3D();
+
+	var base = new THREE.Mesh( 
+		new THREE.CircleGeometry(200, 36),
+		new THREE.MeshBasicMaterial( { color: 0x111111, shading: THREE.FlatShading } ) 
+	);
+		
+	base.applyMatrix(new THREE.Matrix4().identity().rotateX(-Math.PI / 2));
+	base.position.y = -0.6;
+	triangle.add(base);
+
 	var loader = new THREE.OBJLoader();
+	var bodyLoaded = false;
+	var lightsLoaded = false;
+
 	loader.addEventListener( 'load', function ( event ) {
-		bodyGeometry = event.content;
+		bodyGeometry = event.content.clone();			
+		triangle.add(bodyGeometry);
+		if (lightsLoaded)
+			finishModelLoad();
+		else
+			bodyLoaded = true;
 	});
 	
     loader.load( "resources/obj/penrose-body.obj" );
 	
 	var lightLoader = new THREE.OBJLoader();
 	lightLoader.addEventListener( 'load', function ( event ) {
-		lightGeometry = event.content;
+		lightGeometry = event.content.clone();
+		triangle.add(lightGeometry);
+		if (bodyLoaded)
+			finishModelLoad();
+		else
+			lightsLoaded = true;
 	});
 	
     lightLoader.load( "resources/obj/penrose-lights.obj" );
 	
 	settings = new Settings();	
+
+	scene = new THREE.Scene();
+
+	// add subtle ambient lighting
+	var ambientLight = new THREE.AmbientLight(0x222222);
+	scene.add(ambientLight);
+	
+    scene.fog = new THREE.Fog( 0x000000, 0, 1000 );
+
+	// add directional light source
+	var directionalLight = new THREE.DirectionalLight(0x404040);
+	directionalLight.position.set(1, 1, 1).normalize();
+	scene.add(directionalLight);
+
+}
+
+function finishModelLoad() {
+	lightGeometry.traverse( function ( child ) {
+		if ( child instanceof THREE.Mesh ) {			
+			child.material = new THREE.MeshBasicMaterial( { color: 0xffffff, shading: THREE.FlatShading } );
+		}
+	});
+
+	scene.add(triangle);
+	modelLoaded = true;
 }
 
 function onWindowResize() {
@@ -61,108 +104,58 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+var FPS = 30.0;
+var msPerTick = 1000 / FPS;
+var nextTick = Date.now();
+
 function animate() {
+	var currentTime, ticks = 0;
+
 	requestAnimationFrame( animate, renderer.domElement );
 
-	render();
+    currentTime = Date.now();
+    if (currentTime - nextTick > 60 * msPerTick) {
+      	nextTick = currentTime - msPerTick;
+    }
+    while (currentTime > nextTick) {
+      	updateModel();
+      	nextTick += msPerTick;
+      	ticks++;
+    }
+    if (ticks) {
+      	render();
+    }
+
 	controls.update();
-	//stats.update();
 }
 
-var lastTime = 0, lastAnimation = 0, lastRotation = 0;
-function render() {
-	var time = new Date().getTime() / 1000;
-	if (settings.isAnimatingCheckbox.checked) 
-		lastAnimation += time - lastTime;
-
-	if (settings.isRotatingCheckbox.checked) 
-		lastRotation += time - lastTime;
-
-	lastTime = time;
-	
-	var scene = new THREE.Scene();
-	var triangle = new THREE.Object3D();
-	
-	if (lightGeometry === undefined)
+function updateModel() {
+	if (!modelLoaded) {
 		return;
-	
-	var lights = lightGeometry.clone();	
-
-	lights.traverse( function ( child ) {
-		if ( child instanceof THREE.Mesh ) {
-			var faceIndices = [ 'a', 'b', 'c', 'd' ];
-			var color, f, p, n, vertexIndex;
-			geometry  = child.geometry;
-
-			for ( var i = 0; i < geometry.faces.length; i ++ ) {
-				f  = geometry.faces[ i ];
-				n = ( f instanceof THREE.Face3 ) ? 3 : 4;
-
-				for( var j = 0; j < n; j++ ) {
-					vertexIndex = f[ faceIndices[ j ] ];
-
-					p = geometry.vertices[vertexIndex].clone();
-
-					color = new THREE.Color( 0xffffff );
-					
-					var scale = 1;
-					var speed = 4;
-					var amplitude = 0.4;
-					var gain = 0.6;
-					p = p.multiplyScalar(scale)
-					p = p.addScalar((lastAnimation  * speed) % Math.PI);
-					
-					var r = Math.sin(p.x) * Math.cos(p.y) * amplitude + gain;
-					var g = Math.sin(p.y) * Math.cos(p.z) * amplitude + gain;
-					var b = Math.sin(p.z) * Math.cos(p.x) * amplitude + gain;
-					
-					color.setRGB(r, g, b);
-					f.vertexColors[ j ] = color;
-				}
-			}
-			
-			geometry.colorsNeedUpdate = true;
-
-			child.material = new THREE.MeshBasicMaterial( { color: 0xffffff, shading: THREE.FlatShading, vertexColors: THREE.VertexColors } );
-		}
-
-	} );
-	triangle.add(lights);
-	
-	if (bodyGeometry !== undefined) {
-		var geometry = bodyGeometry.clone();
-		triangle.add(geometry);
 	}
-	
 
-	var mesh = new THREE.Mesh( 
-		new THREE.CircleGeometry(200, 36),
-		new THREE.MeshBasicMaterial( { color: 0x111111, shading: THREE.FlatShading } ) 
-	);
-	
-	mesh.applyMatrix(new THREE.Matrix4().identity().rotateX(-Math.PI / 2));
-	mesh.position.y = -0.6;
-	triangle.add(mesh);
-	
-	triangle.applyMatrix(new THREE.Matrix4().identity().rotateY(0.1 * lastRotation));
-		
+	if (settings.isRotatingCheckbox.checked) {
+		triangle.rotation.y += 0.0051;
+	}
+
 	var scale = 0.025;
 	triangle.scale.set(scale, scale, scale);
 	triangle.position.y = -2.5;
-	scene.add(triangle);
 
-	// add subtle ambient lighting
-	var ambientLight = new THREE.AmbientLight(0x222222);
-	scene.add(ambientLight);
-	
-    scene.fog = new THREE.Fog( 0x000000, 0, 1000 );
+	if (settings.isAnimatingCheckbox.checked) {
+		lightHue = (lightHue + 0.001) % 1.0;
+	}
+}
 
-	// add directional light source
-	var directionalLight = new THREE.DirectionalLight(0x222222);
-//	directionalLight.matrix = THREE.Matrix4.getInverse(camera.matrixWorld);
-//	directionalLight.position.set(1, 1, 1).normalize();
-	directionalLight.position.set(1, 1, 1).normalize();
-	scene.add(directionalLight);
+function render() {
+	if (settings.isAnimatingCheckbox.checked && modelLoaded) {
+		lightGeometry.traverse( function ( child ) {
+			if ( child instanceof THREE.Mesh ) {
+				child.material.color.setHSL(lightHue, 1.0, 0.5);
+			}
+		});
+	}
 
 	renderer.render( scene, camera );
 }
+
