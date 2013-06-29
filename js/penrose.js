@@ -134,7 +134,7 @@ function loadDudes() {
 		dudesGeometry.applyMatrix(new THREE.Matrix4().identity().rotateX(-Math.PI / 2));
 		dudesGeometry.traverse( function ( child ) {
 			if ( child instanceof THREE.Mesh ) {			
-				child.material = new THREE.MeshPhongMaterial( { color: 0xeebb44, emissive: 0x664422, shading: THREE.SmoothShading } );
+				child.material = new THREE.MeshPhongMaterial( { color: 0xaa8844, emissive: 0x221100, shading: THREE.SmoothShading } );
 			}
 		});
 		
