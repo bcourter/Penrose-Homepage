@@ -1,6 +1,6 @@
 $(function() {
 
-var renderer, camera, controls, settings, bodyGeometry, lightGeometry, dudesGeometry, triangle, scene, globe;
+var renderer, camera, settings, bodyGeometry, lightGeometry, dudesGeometry, triangle, scene, globe;
 var modelLoaded = false;
 var dudesLoaded = false;
 var lightHue = 0.6;
@@ -8,21 +8,8 @@ var triangleColor = 0x333333;
 var ambientColor = 0x222222;
 var floorHeight = -3;
 
-if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
-var SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024;
-
-var SCREEN_WIDTH = window.innerWidth;
-var SCREEN_HEIGHT = window.innerHeight;
-var FLOOR = -250;
-
-var NEAR = 10, FAR = 3000;
-
-var light;
-var clock = new THREE.Clock();
-
 initUI();
-init();
+initRenderer();
 animate();
 
 document.onselectstart = function() {
@@ -55,50 +42,38 @@ function initUI() {
 	}
 }
 
-function init() {
-	container = document.createElement( 'div' );
-	document.body.appendChild( container );
+function initRenderer() {
+	var panorama = getGetValue("panorama");
+	if (panorama != null) {
+		triangleColor = 0xffffff;
+		ambientColor = 0xaaaaaa;
+	}
 
-	// SCENE CAMERA
+	camera = new THREE.PerspectiveCamera(5, window.innerWidth / window.innerHeight, 1, 1000);
+	camera.position.z = 90;
+	camera.position.x = 50;
 
-	camera = new THREE.PerspectiveCamera( 23, SCREEN_WIDTH / SCREEN_HEIGHT, NEAR, FAR );
-	camera.position.set( 700, 50, 1900 );
+	renderer = new THREE.WebGLRenderer({
+		antialias: true,
+	});
+	renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMapEnabled = true;
+    renderer.shadowMapType = THREE.PCFShadowMap;
+//    renderer.shadowMapSoft = true;
+    // renderer.shadowCameraNear = 5;
+    // renderer.shadowCameraFar = 100;
+    // renderer.shadowCameraFov = 20;
+
+	document.body.appendChild(renderer.domElement);
 
 	controls = new THREE.OrbitControls( camera );
+  	controls.addEventListener( 'change', render );
 
-	controls.lookSpeed = 0.0125;
-	controls.movementSpeed = 500;
-	controls.noFly = false;
-	controls.lookVertical = true;
-	controls.constrainVertical = true;
-	controls.verticalMin = 1.5;
-	controls.verticalMax = 2.0;
-
-	controls.lon = 250;
-
-	// SCENE
-
-	scene = new THREE.Scene();
-	//scene.fog = new THREE.Fog( 0x0, 4000, FAR );
-
-	createScene();
-
-	// RENDERER
-
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-	container.appendChild( renderer.domElement );
-
-	renderer.setClearColor( 0x0, 1 );
-	renderer.autoClear = false;
-
-	//
-
-	renderer.shadowMapEnabled = true;
-	renderer.shadowMapType = THREE.PCFShadowMap;
+//	controls = new THREE.OrbitControls( camera, renderer.domElement );
+//	controls.addEventListener( 'change', render );
+	controls.rotateUp(0.1);
 
 	window.addEventListener( 'resize', onWindowResize, false );
-
 
 	var Settings = function () {
 		this.isRotatingCheckbox = document.getElementById("isRotating");
@@ -106,68 +81,37 @@ function init() {
 		this.showPeopleCheckbox = document.getElementById("showPeople");
 	};
 	settings = new Settings();	
-}
-
-function onWindowResize() {
-
-	SCREEN_WIDTH = window.innerWidth;
-	SCREEN_HEIGHT = window.innerHeight - 2 * MARGIN;
-
-	camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-	camera.updateProjectionMatrix();
-
-	renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-
-	var aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-
-	controls.handleResize();
-
-}
-
-function createScene( ) {
-
-	var panorama = getGetValue("panorama");
-	if (panorama != null) {
-		triangleColor = 0xffffff;
-		ambientColor = 0x888888;
-	}
-
-	// GROUND
-
-	var geometry = new THREE.CircleGeometry( 60, 20 );
-	var planeMaterial = new THREE.MeshPhongMaterial( { color: 0x777777 } );
-	planeMaterial.ambient = planeMaterial.color;
-
-	var ground = new THREE.Mesh( geometry, planeMaterial );
-
-	ground.position.set( 0, FLOOR, 0 );
-	ground.rotation.x = - Math.PI / 2;
-	ground.scale.set( 100, 100, 100 );
-
-	ground.castShadow = false;
-	ground.receiveShadow = true;
-
-//	scene.add( ground );
-
-	// Triangle
+	
 	triangle = new THREE.Object3D();
-	triangle.castShadow = true;
-	triangle.receiveShadow = true;
+
+	var base = new THREE.Mesh( 
+		new THREE.CircleGeometry(200, 36),
+		new THREE.MeshLambertMaterial( { color: 0x111111 } ) 
+	);
+
+	base.receiveShadow = true;
+
+	base.applyMatrix(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+	base.position.y = -0.6;
+	//triangle.add(base);
+
+	scene = new THREE.Scene();
+	globe = new THREE.Scene();
+	scene.add(globe);
 
 	var loader = new THREE.OBJLoader();
 	var bodyLoaded = false;
 	var lightsLoaded = false;
 
 	loader.load( "resources/obj/penrose-body.obj", function ( event ) {
-		bodyGeometry = event.clone();	
-		bodyGeometry.castShadow = true;		
+		bodyGeometry = event.clone();			
 		triangle.add(bodyGeometry);
 		if (lightsLoaded)
 			finishModelLoad();
 		else
 			bodyLoaded = true;
 	});
-
+	
 	var lightLoader = new THREE.OBJLoader();
 	lightLoader.load( "resources/obj/penrose-lights.obj", function ( event ) {
 		lightGeometry = event.clone();
@@ -178,13 +122,10 @@ function createScene( ) {
 			lightsLoaded = true;
 	});
 
-	var scale = 2;
+	var scale = 0.03;
 	triangle.scale.set(scale, scale, scale);
-	triangle.position.y = FLOOR;
-
-	scene.add(triangle);	
-
-
+	triangle.position.y = floorHeight;
+	
 	// panorama
 	if (panorama != null) {
 	    panomap = THREE.ImageUtils.loadTexture("resources/panoramas/" + panorama);
@@ -208,60 +149,41 @@ function createScene( ) {
 	    skybox.receiveShadow = true;
 	    triangle.add(skybox);
 
-
-	 //    var light = new THREE.DirectionalLight(0xdddddd);
-		// light.position.set(0, 1, 0).normalize();
-
-
 	    light = new THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 );
-		light.position.set( 0, 2000, 0 );
+		light.position.set( -800, 1000, 1300 );
 		light.target.position.set( 0, 0, 0 );
 
-		light.castShadow = true;
-		light.onlyShadow =
+	//	light.shadowCameraVisible = true;
 
-		light.shadowCameraNear = 1200;
-		light.shadowCameraFar = 2500;
-		light.shadowCameraFov = 50;
+	    light.castShadow = true;
+	    light.onlyShadow = true;
 
-		light.shadowBias = 0.00001;
-		light.shadowDarkness = 0.5;
+	    var size = 20;
+	    light.shadowCameraLeft = -size;
+	    light.shadowCameraTop = -size;
+	    light.shadowCameraRight = size;
+	    light.shadowCameraBottom = size;
+	    light.shadowCameraNear = 30;
+	    light.shadowCameraFar = 80;
+	    light.shadowCameraFov = 5.2;
+	    light.shadowBias = 0.001
+	    light.shadowMapWidth = light.shadowMapHeight = 128;
+	    light.shadowDarkness = 0.4;  
 
-		light.shadowMapWidth = SHADOW_MAP_WIDTH;
-		light.shadowMapHeight = SHADOW_MAP_HEIGHT;
 
-		light.shadowCameraVisible = true;
-
-		scene.add( light );
+		triangle.add(light);
 	}
 
 	// add subtle ambient lighting
 	var ambientLight = new THREE.AmbientLight(ambientColor);
 	scene.add(ambientLight);
 	
+    scene.fog = new THREE.Fog( 0x000000, 0, 1000 );
+
 	// add directional light source
 	var directionalLight = new THREE.DirectionalLight(0x404040);
 	directionalLight.position.set(1, 1, 1).normalize();
 //	scene.add(directionalLight);
-
-}
-
-function animate() {
-
-	requestAnimationFrame( animate );
-
-	render();
-}
-
-function render() {
-
-	var delta = clock.getDelta();
-
-	controls.update( delta );
-
-	renderer.clear();
-	renderer.render( scene, camera );
-
 }
 
 function getGetValue(key){
@@ -278,8 +200,8 @@ function finishModelLoad() {
 		if ( child instanceof THREE.Mesh ) {			
 			child.material = new THREE.MeshPhongMaterial( { 
 				color: triangleColor, 
-				emissive: 0
-		//		shading: THREE.SmoothShading,
+				emissive: 0x111111, 
+				shading: THREE.SmoothShading,
 			} );
 
 			child.castShadow = true;
@@ -289,10 +211,12 @@ function finishModelLoad() {
 
 	lightGeometry.traverse( function ( child ) {
 		if ( child instanceof THREE.Mesh ) {			
-			child.material = new THREE.MeshPhongMaterial( { color: 0xffffff, shading: THREE.FlatShading } );
+			child.material = new THREE.MeshBasicMaterial( { color: 0xffffff, shading: THREE.FlatShading } );
 		}
 	});
 
+	globe.add(triangle);
+	modelLoaded = true;
 }
 
 function loadDudes() {
@@ -318,69 +242,57 @@ function onWindowResize() {
 	renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+var FPS = 30.0;
+var msPerTick = 1000 / FPS;
+var nextTick = Date.now();
 
+function animate() {
+	var currentTime, ticks = 0;
 
+	requestAnimationFrame( animate, renderer.domElement );
 
+    currentTime = Date.now();
+    if (currentTime - nextTick > 60 * msPerTick) {
+      	nextTick = currentTime - msPerTick;
+    }
+    while (currentTime > nextTick) {
+      	updateModel();
+      	nextTick += msPerTick;
+      	ticks++;
+    }
+    if (ticks) {
+      	render();
+    }
 
+	controls.update();
+}
 
+function updateModel() {
+	if (!modelLoaded) {
+		return;
+	}
 
+	var rotationFactor = 0.001
+	if (settings.isRotatingCheckbox.checked) {
+		triangle.rotation.y += rotationFactor;
+	}
 
+	if (settings.isAnimatingCheckbox.checked) {
+		lightHue = (lightHue + 0.001) % 1.0;
+	}
+}
 
+function render() {
+	if (settings.isAnimatingCheckbox.checked && modelLoaded) {
+		lightGeometry.traverse( function ( child ) {
+			if ( child instanceof THREE.Mesh ) {
+				child.material.color.setHSL(lightHue, 1.0, 0.6);
+			}
+		});
+	}
 
-
-
-
-// var FPS = 30.0;
-// var msPerTick = 1000 / FPS;
-// var nextTick = Date.now();
-
-// function animate() {
-// 	var currentTime, ticks = 0;
-
-// 	requestAnimationFrame( animate, renderer.domElement );
-
-//     currentTime = Date.now();
-//     if (currentTime - nextTick > 60 * msPerTick) {
-//       	nextTick = currentTime - msPerTick;
-//     }
-//     while (currentTime > nextTick) {
-//       	updateModel();
-//       	nextTick += msPerTick;
-//       	ticks++;
-//     }
-//     if (ticks) {
-//       	render();
-//     }
-
-// 	controls.update();
-// }
-
-// function updateModel() {
-// 	if (!modelLoaded) {
-// 		return;
-// 	}
-
-// 	var rotationFactor = 0.001
-// 	if (settings.isRotatingCheckbox.checked) {
-// 		triangle.rotation.y += rotationFactor;
-// 	}
-
-// 	if (settings.isAnimatingCheckbox.checked) {
-// 		lightHue = (lightHue + 0.001) % 1.0;
-// 	}
-// }
-
-// function render() {
-// 	if (settings.isAnimatingCheckbox.checked && modelLoaded) {
-// 		lightGeometry.traverse( function ( child ) {
-// 			if ( child instanceof THREE.Mesh ) {
-// 				child.material.color.setHSL(lightHue, 1.0, 0.6);
-// 			}
-// 		});
-// 	}
-
-// 	renderer.render( scene, camera );
-// }
+	renderer.render( scene, camera );
+}
 
 }); // jQuery function wrapper
 
