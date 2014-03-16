@@ -66,9 +66,12 @@ function initRenderer() {
 
 	controls = new THREE.OrbitControls( camera );
   	controls.addEventListener( 'change', render );
+  	controls.minDistance = 20;
+  	controls.maxDistance = 200;
+  	controls.zoomSpeed = 0.2;
+  	controls.target = new THREE.Vector3(0, -0.2, 0);
 
-//	controls = new THREE.OrbitControls( camera, renderer.domElement );
-//	controls.addEventListener( 'change', render );
+
 	controls.rotateUp(0.1);
 
 	window.addEventListener( 'resize', onWindowResize, false );
@@ -203,7 +206,7 @@ function initRenderer() {
 	    light.shadowCameraBottom = size;
 	    light.shadowCameraNear = 30;
 	    light.shadowCameraFar = 80;
-	    light.shadowCameraFov = 5.5
+	    light.shadowCameraFov = 5.4
 	    light.shadowBias = 0.01
 	    light.shadowMapWidth = light.shadowMapHeight = 128;
 	    light.shadowDarkness = 0.3;  
