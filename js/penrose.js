@@ -156,8 +156,14 @@ function initRenderer() {
 	    	var vertex = sphere.vertices[i];
 	    	vertex.y = Math.max(vertex.y + sphereFloor, 0);
 
+	    	var r = Math.sqrt(vertex.x * vertex.x + vertex.z * vertex.z);
+	    	if (vertex.y == 0) {
+	    		var expand = Math.asin(r / radius) / Math.PI * 2;
+	    		vertex.x *= expand;
+	    		vertex.z *= expand;
+	    	}
+
 	    	if (vertex.y > sphereFloor) {
-	    		r = Math.sqrt(vertex.x * vertex.x + vertex.z * vertex.z);
 	    		var factor = 0;
 	    		if (vertex.y > sphereCap) {
 	    			factor = (vertex.y - sphereCap) / (radius - sphereCap);
