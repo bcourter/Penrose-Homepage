@@ -158,15 +158,16 @@ function initRenderer() {
 
 	    	if (vertex.y > sphereFloor) {
 	    		r = Math.sqrt(vertex.x * vertex.x + vertex.z * vertex.z);
+	    		var factor = 0;
+	    		if (vertex.y > sphereCap) {
+	    			factor = (vertex.y - sphereCap) / (radius - sphereCap);
+	    			vertex.y += factor * (vertex.y - sphereCap);
+	    		}
+
 	    		if (r > 0.001) {
-		    		var factor = 0;
-		    		if (vertex.y > sphereCap)
-		    			factor = (vertex.y - sphereCap) / (radius - sphereCap);
-
-
 		    		vertex.x *= (1-factor) * radius / r + factor;
 		    		vertex.z *= (1-factor) * radius / r + factor;
-		    	}
+	    		}
 	    	}
 	    }
 
@@ -180,7 +181,7 @@ function initRenderer() {
 	    skybox.receiveShadow = true;
 	    triangle.add(skybox);
 
-	    light = new THREE.SpotLight( 0x333333, 1, 0, Math.PI / 2, 1 );
+	    light = new THREE.SpotLight( 0x222222, 1, 0, Math.PI / 2, 1 );
 		light.position.set( -24, 30, 40 );
 		light.target.position.set( 0, -2, 0 );
 
@@ -262,6 +263,7 @@ function loadOtherObj(name, color) {
 			if ( child instanceof THREE.Mesh ) {			
 				child.material = new THREE.MeshPhongMaterial( { 
 					color: color, 
+		//			emissive: color,	
 					emissive: new THREE.Color(color).lerp(new THREE.Color(0x0), 0.8).getHex(),	
 					shading: THREE.SmoothShading,
 					specular: color,
@@ -269,7 +271,7 @@ function loadOtherObj(name, color) {
 				 } );
 			}
 
-			if (name == "penrose-flange.obj")
+			if (name == "penrose-flanges.obj")
 				child.castShadow = true;
 		});
 		
