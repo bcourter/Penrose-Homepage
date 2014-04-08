@@ -152,7 +152,7 @@ function initRenderer() {
 	    var sphere = new THREE.SphereGeometry( radius, 64, 48 );
 	    sphere.applyMatrix( new THREE.Matrix4().makeScale( -1, 1, 1 ) );
 
-	    if (panorama = "catalyst.jpg")
+	    if (panorama == "catalyst.jpg")
 	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(0.53));
 	  	else
 	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(1.75));
