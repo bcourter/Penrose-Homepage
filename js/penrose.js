@@ -151,7 +151,11 @@ function initRenderer() {
 	    var radius = 7;
 	    var sphere = new THREE.SphereGeometry( radius, 64, 48 );
 	    sphere.applyMatrix( new THREE.Matrix4().makeScale( -1, 1, 1 ) );
-	    sphere.applyMatrix( new THREE.Matrix4().makeRotationY(1.75));
+
+	    if (panorama = "catalyst.jpg")
+	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(0.53));
+	  	else
+	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(1.75));
 
 	    var sphereFloor = 0.1
 	    var sphereCap = radius * 3 / 4;
