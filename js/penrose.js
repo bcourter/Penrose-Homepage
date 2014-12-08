@@ -154,6 +154,8 @@ function initRenderer() {
 
 	    if (panorama == "catalyst.jpg")
 	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(0.53));
+	    if (panorama == "fortpoint.jpg")
+	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(2.2));
 	  	else
 	  	  	sphere.applyMatrix( new THREE.Matrix4().makeRotationY(1.75));
 
